@@ -97,15 +97,39 @@ class CnnDQN(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(self.feature_size(), 512),
             nn.ReLU(),
-            nn.Linear(512, self.num_actions)
+            #nn.Linear(512, self.num_actions)
+        )
+
+        self.fc_adv = nn.Sequential(
+            nn.Linear(512,64),
+            nn.ReLU(),
+            nn.Linear(64,64),
+            nn.ReLU(),
+            nn.Linear(64, self.num_actions)
+        )
+
+        self.fc_value = nn.Sequential(
+            nn.Linear(512,64),
+            nn.ReLU(),
+            nn.Linear(64,64),
+            nn.ReLU(),
+            nn.Linear(64,1)
         )
         
     def forward(self, x):
         x = x.view(-1,*self.input_shape)
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
+        ac_scores = self.fc_adv(x)
+        
+        if self.dueling:
+            value_scores = self.fc_value(x)
+            ac_scores_mean = torch.mean(ac_scores,dim=1)
+            ac_center = ac_scores - torch.unsqueeze(ac_scores_mean,1)
+            output = value_scores + ac_center
+        else:
+            output = ac_scores
+        return output
     
     def feature_size(self):
         return self.features(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1)
