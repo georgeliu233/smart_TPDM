@@ -6,4 +6,4 @@ import torch
 
 a = torch.zeros(1, *(80,80,3))
 print(a.size())
-b = 
+print(torch.cuda.is_available())

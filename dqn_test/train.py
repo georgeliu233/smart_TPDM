@@ -18,7 +18,7 @@ import pickle
 
 from DQN_net import NaivePrioritizedBuffer,CnnDQN,Variable,USE_CUDA
 from tensorboardX import SummaryWriter
-
+print(USE_CUDA)
 class DQN_LHC(object):
     def __init__(self,env,batch_size,gamma=0.99,replay_initial=1000,PER_size=50000,
         epsilon_start=1.0,epsilon_final=0.01,epsilon_decay=3000,beta_start=0.4,beta_steps=10000,
@@ -110,12 +110,14 @@ class DQN_LHC(object):
             next_state, reward, done, _ = self.env.step(agent_action)
             next_state = next_state["Agent-LHC"].top_down_rgb.data/255
             reward = reward["Agent-LHC"]
+            done = done["Agent-LHC"]
+
             self.replay_buffer.push(state, action, reward, next_state, done)
             
             state = next_state
             episode_reward += reward
             
-            if done["__all__"]:
+            if done:
                 state = self.env.reset()
                 state = state["Agent-LHC"].top_down_rgb.data/255
                 all_rewards.append(episode_reward)
