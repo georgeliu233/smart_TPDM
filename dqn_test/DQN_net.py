@@ -57,7 +57,7 @@ class NaivePrioritizedBuffer(object):
         weights /= weights.max()
         weights  = np.array(weights, dtype=np.float32)
         
-        batch       = zip(*samples)
+        batch       = list(zip(*samples))
         states      = np.concatenate(batch[0])
         actions     = batch[1]
         rewards     = batch[2]
@@ -112,9 +112,10 @@ class CnnDQN(nn.Module):
     
     def act(self, state, epsilon):
         if random.random() > epsilon:
-            state   = Variable(torch.FloatTensor(np.float32(state)).unsqueeze(0), volatile=True)
+            with torch.no_grad():
+                state = Variable(torch.FloatTensor(np.float32(state)).unsqueeze(0))
             q_value = self.forward(state)
-            action  = q_value.max(1)[1].data[0]
+            action  = q_value.max(1)[1].item()
         else:
             action = random.randrange(self.env.action_space.n)
         return action

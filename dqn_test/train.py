@@ -124,7 +124,7 @@ class DQN_LHC(object):
             if len(self.replay_buffer) > self.replay_initial:
                 beta = self.beta_by_frame(frame_idx)
                 loss = self.compute_td_loss(self.batch_size, beta)
-                losses.append(loss.data[0])
+                losses.append(loss.item())
                 if self.tensorboard_dir is not None:
                     self.writer.add_scalar('Loss',losses[-1],frame_idx)
                     self.writer.add_scalar('Episode_reward',all_rewards[-1],frame_idx)
@@ -138,9 +138,10 @@ class DQN_LHC(object):
             
 
     def eval(self,obs):
-        obs   = Variable(torch.FloatTensor(np.float32(obs)).unsqueeze(0), volatile=True)
+        with torch.no_grad():
+            obs   = Variable(torch.FloatTensor(np.float32(obs)).unsqueeze(0))
         q_value = self.target_model.forward(obs)
-        action  = q_value.max(1)[1].data[0]
+        action  = q_value.max(1)[1].item()
         return action
         
     def save(self,save_path,save_PER=False):
