@@ -125,9 +125,9 @@ class CnnDQN(nn.Module):
         
         if self.dueling:
             value_scores = self.fc_value(x)
-            ac_scores_mean = torch.mean(ac_scores,dim=1)
-            ac_center = ac_scores - torch.unsqueeze(ac_scores_mean,1)
-            output = value_scores + ac_center
+            #ac_scores_mean = torch.mean(ac_scores,dim=1)
+            #ac_center = ac_scores - torch.unsqueeze(ac_scores_mean,1)
+            output = value_scores + ac_scores - ac_scores.mean()
         else:
             output = ac_scores
         return output
