@@ -29,6 +29,6 @@ env = gym.make(
 env.action_space=gym.spaces.Discrete(4)
 env.observation_space = gym.spaces.Box(low=0, high=1, shape=(3,80,80), dtype=np.float32)
 
-trainer = DQN_LHC(env,64,tensorboard_dir='/home/haochen/SMARTS_test_TPDM/tb_log/DQN_1')
+trainer = DQN_LHC(env,64,tensorboard_dir='/home/haochen/SMARTS_test_TPDM/tb_log/DQN_1',PER_size=20000,dueling=True)
 trainer.train(100000)
 trainer.save('/home/haochen/SMARTS_test_TPDM/dqn_model')

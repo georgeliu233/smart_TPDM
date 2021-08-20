@@ -157,7 +157,7 @@ class DQN_LHC(object):
         if save_PER:
             hyper_dict['PER']=self.replay_buffer
         print('Saving dict....')
-        with open(save_path+'/hyper_dict.pkl','w') as writer:
+        with open(save_path+'/hyper_dict.pkl','wb') as writer:
             pickle.dump(hyper_dict,writer)
         
         #Saving model params
@@ -170,7 +170,7 @@ class DQN_LHC(object):
     def load(self,load_path,eval=False):
         if not eval:
             print('loading dict...')
-            with open(load_path+'/hyper_dict.pkl','r') as reader:
+            with open(load_path+'/hyper_dict.pkl','rb') as reader:
                 hyper_dict = pickle.load(reader)
 
             print(hyper_dict.keys())

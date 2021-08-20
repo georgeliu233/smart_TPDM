@@ -120,6 +120,7 @@ class CnnDQN(nn.Module):
         x = x.view(-1,*self.input_shape)
         x = self.features(x)
         x = x.view(x.size(0), -1)
+        x = self.fc(x)
         ac_scores = self.fc_adv(x)
         
         if self.dueling:
