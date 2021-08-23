@@ -24,7 +24,7 @@ agent_specs = {
 
 env = gym.make(
     "smarts.env:hiway-v0",
-    scenarios=["scenarios/intersections/roundabout"],
+    scenarios=["scenarios/intersections/2lane"],
     agent_specs=agent_specs,
 )
 print('ac:')
@@ -37,25 +37,26 @@ print(env.observation_space)
 # }
 observations = env.reset()
 
-for i in range(100):
+for i in range(300):
     # agent_actions = {
     #     agent_id: agents[agent_id].act(agent_obs)
     #     for agent_id, agent_obs in observations.items()
     # }
     #print(agent_actions["Agent-007"])
-    act_set = ["change_lane_left","change_lane_right"]
+    act_set = ["change_lane_left","change_lane_right",'keep_lane','slow_down']
     action = act_set[np.random.randint(0,2)]
     agent_actions={
         "Agent-007":action
     }
     observations, r, done, _ = env.step(agent_actions)
-    print(r)
+    #print(r)
     obs = observations["Agent-007"]
-    if i%20==0:
-        print(obs.top_down_rgb.data.shape)
-        plt.figure()
-        plt.imshow(obs.top_down_rgb.data)
-        plt.savefig('test_image/'+str(i)+'.png')
+    print(obs.events)
+    # if i%20==0:
+    #     print(obs.top_down_rgb.data.shape)
+    #     plt.figure()
+    #     plt.imshow(obs.top_down_rgb.data)
+    #     plt.savefig('test_image/'+str(i)+'.png')
     if done['__all__']:
         print('reset!')
         observations = env.reset()

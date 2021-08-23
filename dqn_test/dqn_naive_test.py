@@ -10,8 +10,8 @@ import numpy as np
 from train import DQN_LHC
 
 agent_spec = AgentSpec(
-    interface=AgentInterface.from_type(AgentType.LHC_RL, max_episode_steps=None),
-    agent_builder=None,
+    interface=AgentInterface.from_type(AgentType.LHC_RL, max_episode_steps=1000),
+    agent_builder=None
 )
 
 agent_specs = {
@@ -21,7 +21,7 @@ agent_specs = {
 
 env = gym.make(
     "smarts.env:hiway-v0",
-    scenarios=["scenarios/intersections/roundabout"],
+    scenarios=["scenarios/loop"],
     agent_specs=agent_specs,
 )
 
@@ -29,6 +29,8 @@ env = gym.make(
 env.action_space=gym.spaces.Discrete(4)
 env.observation_space = gym.spaces.Box(low=0, high=1, shape=(3,80,80), dtype=np.float32)
 
-trainer = DQN_LHC(env,64,tensorboard_dir='/home/haochen/SMARTS_test_TPDM/tb_log/DQN_1',PER_size=20000,dueling=True)
+direction = '/home/haochen/SMARTS_test_TPDM/tb_log/DQN_loop_cnn'
+trainer = DQN_LHC(env,128,tensorboard_dir=direction,
+            PER_size=20000,dueling=True,epsilon_decay=5000,fc_only=False,fusioned=False)
 trainer.train(100000)
-trainer.save('/home/haochen/SMARTS_test_TPDM/dqn_model')
+trainer.save('/home/haochen/SMARTS_test_TPDM/dqn_model_loop_cnn')
