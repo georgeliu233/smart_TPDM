@@ -109,17 +109,22 @@ class DQN_LHC(object):
         ego = env_obs.ego_vehicle_state
         waypoint_paths = env_obs.waypoint_paths
         wps = [path[0] for path in waypoint_paths]
-
         # distance of vehicle from center of lane
         # closest_wp = min(wps, key=lambda wp: wp.dist_to(ego.position))
 
         dist_from_centers = []
         angle_errors = []
+        if len(wps)<3:
+            for _ in range(3-len(wps)):
+                dist_from_centers.append(0.0)
+                angle_errors.append(0.0)
         for wp in wps:
             signed_dist_from_center = wp.signed_lateral_error(ego.position)
             lane_hwidth = wp.lane_width * 0.5
             dist_from_centers.append(signed_dist_from_center / lane_hwidth)
             angle_errors.append(wp.relative_heading(ego.heading))
+        
+
 
         neighborhood_vehicles = env_obs.neighborhood_vehicle_states
         relative_neighbor_distance = [np.array([10, 10])]*3
@@ -137,11 +142,19 @@ class DQN_LHC(object):
                 relative_neighbor_distance[i] = np.clip(
                     (ego.position[:2]-neighborhood_vehicles[nearest_vehicle_indexes[i]].position[:2]), -10, 10).tolist()
 
-        return np.array(
-            dist_from_centers + angle_errors+ego.position[:2].tolist()+[ego.speed, ego.steering]+[
-                diff for diffs in relative_neighbor_distance for diff in diffs],
+        distances = [
+                diff for diffs in relative_neighbor_distance for diff in diffs]
+        # print(len(dist_from_centers))
+        # print(len(angle_errors))
+        # print(len(ego.position[:2].tolist()))
+        # print(len(distances))
+
+        observations =  np.array(
+            dist_from_centers + angle_errors+ego.position[:2].tolist()+[ego.speed, ego.steering]+distances,
             dtype=np.float32,
         )
+        assert observations.shape[-1]==16,observations.shape
+        return observations
     def train(self,training_steps):
 
         losses = []
@@ -218,7 +231,7 @@ class DQN_LHC(object):
                 if self.tensorboard_dir is not None and len(self.replay_buffer) > self.replay_initial:
                     self.writer.add_scalar('Loss',losses[-1],frame_idx)
                     self.writer.add_scalar('Episode_reward',all_rewards[-1],frame_idx)
-                    with open('/home/haochen/SMARTS_test_TPDM/log_loop_cnn.json','w',encoding='utf-8') as writer:
+                    with open('/home/haochen/SMARTS_test_TPDM/log_left_state.json','w',encoding='utf-8') as writer:
                         writer.write(json.dumps([all_rewards,time_steps],ensure_ascii=False,indent=4))
                 
             if len(self.replay_buffer) > self.replay_initial:

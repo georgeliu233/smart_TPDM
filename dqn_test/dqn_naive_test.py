@@ -21,7 +21,7 @@ agent_specs = {
 
 env = gym.make(
     "smarts.env:hiway-v0",
-    scenarios=["scenarios/loop"],
+    scenarios=["scenarios/left_turn"],
     agent_specs=agent_specs,
 )
 
@@ -29,8 +29,8 @@ env = gym.make(
 env.action_space=gym.spaces.Discrete(4)
 env.observation_space = gym.spaces.Box(low=0, high=1, shape=(3,80,80), dtype=np.float32)
 
-direction = '/home/haochen/SMARTS_test_TPDM/tb_log/DQN_loop_cnn'
+direction = '/home/haochen/SMARTS_test_TPDM/tb_log/DQN_left_state'
 trainer = DQN_LHC(env,128,tensorboard_dir=direction,
-            PER_size=20000,dueling=True,epsilon_decay=5000,fc_only=False,fusioned=False)
+            PER_size=20000,dueling=True,epsilon_decay=5000,fc_only=True,fusioned=False)
 trainer.train(100000)
-trainer.save('/home/haochen/SMARTS_test_TPDM/dqn_model_loop_cnn')
+trainer.save('/home/haochen/SMARTS_test_TPDM/dqn_model')
