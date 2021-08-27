@@ -126,7 +126,57 @@ def decode_map_xml(path):
 def test_scenario(scenario_root):
     routes = Scenario.discover_routes(scenario_root)
     print(routes)
+
+def load_traj_data(dir,print_sample=False):
+    
+    with open(dir,'rb') as reader:
+        datas = pickle.load(reader)
+    if print_sample:
+        single_traj = list(datas.values())[0]
+
+        pos_list = []
+        orient_list = []
+        head_list = []
+
+        bounding_box_list=[]
+
+        yaw_list = []
+        v_list = []
+
+        for data,t_step in single_traj:
+            pos_list.append(data.pose.position[:2])
+            orient_list.append(data.pose.orientation)
+            head_list.append(data.pose.heading_)
+
+            bbox = data.dimensions
+            bounding_box_list.append((
+                bbox.length,
+                bbox.width,
+                bbox.height
+            ))
+
+            yaw_list.append(data.yaw_rate)
+            v_list.append(data.speed)
+        
+        x,y = [p[0] for p in pos_list],[p[1] for p in pos_list]
+        plt.figure()
+        plt.scatter(x,y)
+        plt.savefig('/home/haochen/SMARTS_test_TPDM/traj_data/test_traj.png')
+
+        plt.figure()
+        plt.subplot(1,2,1)
+        plt.plot(v_list)
+        plt.subplot(1,2,2)
+        plt.plot(yaw_list)
+        plt.savefig('/home/haochen/SMARTS_test_TPDM/traj_data/test_v.png')
+
+
+
+
+
+
 if __name__ == "__main__":
-    generate_trajs()
+    #generate_trajs()
+    load_traj_data('/home/haochen/SMARTS_test_TPDM/traj_data/traj_1000_0.pkl',True)
     #decode_map_xml('/home/haochen/SMARTS/scenarios/intersections/2lane/map.net.xml')
     #test_scenario('/home/haochen/SMARTS/scenarios/left_turn')
