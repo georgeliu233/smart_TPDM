@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-08-27 11:53:32 by Eclipse SUMO duarouter Version 1.10.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/haochen/SMARTS/scenarios/left_turn/map.net.xml"/>
+        <route-files value="/tmp/tmpwysbnvbn/trips.trips.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/haochen/SMARTS/scenarios/left_turn/traffic/horizontal_46.rou.xml"/>
+        <alternatives-output value="/home/haochen/SMARTS/scenarios/left_turn/traffic/horizontal_46.rou.alt.xml"/>
+    </output>
+
+    <processing>
+        <unsorted-input value="true"/>
+        <repair value="true"/>
+    </processing>
+
+    <report>
+        <error-log value="/home/haochen/.smarts/_duarouter_routing/traffic/horizontal_46.log"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <random_number>
+        <seed value="46"/>
+    </random_number>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="actor-car-8505351606554084650" minGap="2.50" maxSpeed="55.50" speedFactor="normc(0.50,0.10,0.20,2.00)" vClass="passenger" impatience="0.50" lcCooperative="0.5" lcImpatience="0.2" jmDriveAfterYellowTime="1.0" accel="2.6" decel="4.5" sigma="0.5"/>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-1.0" type="actor-car-8505351606554084650" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vType id="actor-im_car--4609983157941813551" minGap="2.50" maxSpeed="55.50" speedFactor="normc(0.50,0.10,0.20,2.00)" vClass="passenger" impatience="1.00" lcCooperative="0.25" lcImpatience="1" jmDriveAfterYellowTime="1.0" jmDriveAfterRedTime="1.5" accel="2.6" decel="4.5" sigma="0.5"/>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-0.0" type="actor-im_car--4609983157941813551" depart="0.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-1.1" type="actor-car-8505351606554084650" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-0.1" type="actor-im_car--4609983157941813551" depart="720.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-1.2" type="actor-car-8505351606554084650" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-0.2" type="actor-im_car--4609983157941813551" depart="1440.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-1.3" type="actor-car-8505351606554084650" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-0.3" type="actor-im_car--4609983157941813551" depart="2160.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-1.4" type="actor-car-8505351606554084650" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--2-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_0_random-edge-west-EW_0_random-7690921649915051089--5494277018775949075--3-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--10-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-east-EW_1_random-edge-west-EW_1_random--1882300754810835522--5494277018775949075--11-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-east-EW edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--4-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-east-WE_0_random-6956296891124205739--5494277018775949075--5-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--6-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-south-SN_0_random-edge-west-EW_0_random--8152421495040816980--5494277018775949075--7-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-south-SN edge-west-EW"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--0-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_0_random-edge-east-WE_0_random-4463149231485168402--5494277018775949075--1-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="0" departPos="random" departSpeed="max" arrivalLane="0" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--8-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+    <vehicle id="im_car-flow-route-edge-west-WE_1_random-edge-east-WE_1_random--8590195847881936911--5494277018775949075--9-0.4" type="actor-im_car--4609983157941813551" depart="2880.00" departLane="1" departPos="random" departSpeed="max" arrivalLane="1" arrivalPos="random">
+        <route edges="edge-west-WE edge-east-WE"/>
+    </vehicle>
+</routes>
