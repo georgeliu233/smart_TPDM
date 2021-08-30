@@ -45,18 +45,23 @@ class MultiStepBuff:
 
 class LazyMemory(dict):
 
-    def __init__(self, capacity, state_shape, device):
+    def __init__(self, capacity, state_shape, device,contiuous=False,action_shape=None,cnn=False):
         super(LazyMemory, self).__init__()
         self.capacity = int(capacity)
         self.state_shape = state_shape
         self.device = device
+        self.contiuous=contiuous
+        self.action_shape=action_shape
+        self.cnn = cnn
         self.reset()
 
     def reset(self):
         self['state'] = []
         self['next_state'] = []
-
-        self['action'] = np.empty((self.capacity, 1), dtype=np.int64)
+        if self.contiuous:
+            self['action'] = []
+        else:
+            self['action'] = np.empty((self.capacity, 1), dtype=np.int64)
         self['reward'] = np.empty((self.capacity, 1), dtype=np.float32)
         self['done'] = np.empty((self.capacity, 1), dtype=np.float32)
 
@@ -70,7 +75,10 @@ class LazyMemory(dict):
     def _append(self, state, action, reward, next_state, done):
         self['state'].append(state)
         self['next_state'].append(next_state)
-        self['action'][self._p] = action
+        if self.contiuous:
+            self['action'].append(action)
+        else:
+            self['action'][self._p] = action
         self['reward'][self._p] = reward
         self['done'][self._p] = done
 
@@ -90,21 +98,37 @@ class LazyMemory(dict):
 
     def _sample(self, indices, batch_size):
         bias = -self._p if self._n == self.capacity else 0
-
+        if self.cnn:
+            ty = np.int8
+        else:
+            ty = np.float32
         states = np.empty(
-            (batch_size, *self.state_shape), dtype=np.uint8)
+            (batch_size, *self.state_shape), dtype=ty)
         next_states = np.empty(
-            (batch_size, *self.state_shape), dtype=np.uint8)
+            (batch_size, *self.state_shape), dtype=ty)
 
         for i, index in enumerate(indices):
             _index = np.mod(index+bias, self.capacity)
             states[i, ...] = self['state'][_index]
             next_states[i, ...] = self['next_state'][_index]
 
-        states = torch.ByteTensor(states).to(self.device).float() / 255.
-        next_states = torch.ByteTensor(
-            next_states).to(self.device).float() / 255.
-        actions = torch.LongTensor(self['action'][indices]).to(self.device)
+        if not self.cnn:
+            states = torch.FloatTensor(states).to(self.device).float() #/ 255.
+            next_states = torch.FloatTensor(
+                next_states).to(self.device).float() #/ 255.
+        else:
+            states = torch.ByteTensor(states).to(self.device).float() / 255.
+            next_states = torch.ByteTensor(
+                next_states).to(self.device).float() / 255.
+        if self.contiuous:
+            actions = np.empty((batch_size, *self.action_shape), dtype=np.float32)
+            for i, index in enumerate(indices):
+                _index = np.mod(index+bias, self.capacity)
+                actions[i, ...] = self['action'][_index]
+            actions = torch.FloatTensor(actions).to(self.device)
+        else:
+            actions = torch.LongTensor(self['action'][indices]).to(self.device)
+
         rewards = torch.FloatTensor(self['reward'][indices]).to(self.device)
         dones = torch.FloatTensor(self['done'][indices]).to(self.device)
 
@@ -117,9 +141,9 @@ class LazyMemory(dict):
 class LazyMultiStepMemory(LazyMemory):
 
     def __init__(self, capacity, state_shape, device, gamma=0.99,
-                 multi_step=3):
+                 multi_step=3,continuous=False,action_shape=None,cnn=False):
         super(LazyMultiStepMemory, self).__init__(
-            capacity, state_shape, device)
+            capacity, state_shape, device,continuous,action_shape,cnn)
 
         self.gamma = gamma
         self.multi_step = int(multi_step)

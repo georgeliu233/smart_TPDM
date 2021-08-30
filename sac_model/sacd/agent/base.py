@@ -16,11 +16,14 @@ class BaseAgent(ABC):
                  target_entropy_ratio=0.98, start_steps=20000,
                  update_interval=4, target_update_interval=8000,
                  use_per=False, num_eval_steps=125000, max_episode_steps=27000,
-                 log_interval=10, eval_interval=1000, cuda=True, seed=0,obs_dim=[16]):
+                 log_interval=10, eval_interval=1000, cuda=True, seed=0,obs_dim=[16],continuous=False,
+                 action_space=None,cnn=False):
         super().__init__()
         self.env = env
         self.test_env = test_env
         self.obs_dim  = obs_dim
+        self.continuous = continuous
+        self.cnn=cnn
         # Set seed.
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -40,12 +43,14 @@ class BaseAgent(ABC):
                 capacity=memory_size,
                 state_shape=self.obs_dim,
                 device=self.device, gamma=gamma, multi_step=multi_step,
-                beta_steps=beta_steps)
+                action_shape=action_space,
+                beta_steps=beta_steps,continous=continuous,cnn=cnn)
         else:
             self.memory = LazyMultiStepMemory(
                 capacity=memory_size,
                 state_shape=self.obs_dim,
-                device=self.device, gamma=gamma, multi_step=multi_step)
+                action_shape=action_space,
+                device=self.device, gamma=gamma, multi_step=multi_step,continuous=continuous,cnn=cnn)
 
         self.log_dir = log_dir
         self.model_dir = os.path.join(log_dir, 'model')
@@ -74,7 +79,6 @@ class BaseAgent(ABC):
         self.max_episode_steps = max_episode_steps
         self.log_interval = log_interval
         self.eval_interval = eval_interval
-
 
         self.action_choice = ["keep_lane","slow_down","change_lane_left","change_lane_right"]
 
@@ -178,7 +182,10 @@ class BaseAgent(ABC):
 
         done = {"Agent-LHC":False}
         state = self.env.reset()
-        state = self.observation_adapter(state["Agent-LHC"])
+        if self.cnn:
+            state = state["Agent-LHC"].top_down_rgb.data
+        else:
+            state = self.observation_adapter(state["Agent-LHC"])
 
         while (not done["Agent-LHC"]) and episode_steps <= self.max_episode_steps:
 
@@ -186,12 +193,30 @@ class BaseAgent(ABC):
                 action = self.env.action_space.sample()
             else:
                 action = self.explore(state)
+                action = np.squeeze(action)
             
-
-            next_obs, reward, done, _ = self.env.step({
-                "Agent-LHC":self.action_choice[action]
+            if self.continuous:
+                choice_action = []
+                MAX_SPEED = 10
+                choice_action.append((action[0]+1)/2*MAX_SPEED)
+                if action[1]<= -1/3:
+                    choice_action.append(-1)
+                elif -1/3< action[1] <1/3:
+                    choice_action.append(0)
+                else:
+                    choice_action.append(1)
+                #print(choice_action)
+                next_obs, reward, done, _ = self.env.step({
+                "Agent-LHC":choice_action
             })
-            next_state = self.observation_adapter(next_obs["Agent-LHC"])
+            else:
+                next_obs, reward, done, _ = self.env.step({
+                    "Agent-LHC":self.action_choice[action]
+                })
+            if self.cnn:
+                next_state = next_obs["Agent-LHC"].top_down_rgb.data
+            else:
+                next_state = self.observation_adapter(next_obs["Agent-LHC"])
             done_events = next_obs["Agent-LHC"].events
             if done_events.collisions !=[]:
                 reward["Agent-LHC"] -= 10
@@ -224,7 +249,7 @@ class BaseAgent(ABC):
         self.return_log.append(episode_return)
         self.step_log.append(self.steps)
 
-        with open('/home/haochen/SMARTS_test_TPDM/log_sacd_left.json','w',encoding='utf-8') as writer:
+        with open('/home/haochen/SMARTS_test_TPDM/log_saccon_cnn_left.json','w',encoding='utf-8') as writer:
             writer.write(json.dumps([self.return_log,self.step_log],ensure_ascii=False,indent=4))
         if self.episodes % self.log_interval == 0:
             self.writer.add_scalar(

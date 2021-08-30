@@ -9,8 +9,8 @@ class LazyPrioritizedMultiStepMemory(LazyMultiStepMemory):
 
     def __init__(self, capacity, state_shape, device, gamma=0.99,
                  multi_step=3, alpha=0.6, beta=0.4, beta_steps=2e5,
-                 min_pa=0.0, max_pa=1.0, eps=0.01):
-        super().__init__(capacity, state_shape, device, gamma, multi_step)
+                 min_pa=0.0, max_pa=1.0, eps=0.01,continous=False,action_shape=None,cnn=False):
+        super().__init__(capacity, state_shape, device, gamma, multi_step,continous,action_shape,cnn)
 
         self.alpha = alpha
         self.beta = beta

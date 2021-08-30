@@ -16,25 +16,42 @@ class SacdAgent(BaseAgent):
                  update_interval=4, target_update_interval=8000,
                  use_per=False, dueling_net=False, num_eval_steps=125000,
                  max_episode_steps=27000, log_interval=10, eval_interval=1000,
-                 cuda=True, seed=0,tau=0.005,obs_dim=[16]):
+                 cuda=True, seed=0,tau=0.005,obs_dim=[16],continuous=False,action_space=None,
+                 cnn=False):
         super().__init__(
             env, test_env, log_dir, num_steps, batch_size, memory_size, gamma,
             multi_step, target_entropy_ratio, start_steps, update_interval,
             target_update_interval, use_per, num_eval_steps, max_episode_steps,
-            log_interval, eval_interval, cuda, seed,obs_dim)
+            log_interval, eval_interval, cuda, seed,obs_dim,continuous,action_space,cnn)
         
         self.tau = tau
+        self.cnn = cnn
         # Define networks.
         self.obs_dim = obs_dim
-        self.policy = CateoricalPolicy(
-            self.obs_dim[0], self.env.action_space.n
-            ).to(self.device)
-        self.online_critic = TwinnedQNetwork(
-            self.obs_dim[0], self.env.action_space.n,
-            dueling_net=dueling_net).to(device=self.device)
-        self.target_critic = TwinnedQNetwork(
-            self.obs_dim[0], self.env.action_space.n,
-            dueling_net=dueling_net).to(device=self.device).eval()
+        self.continuous = continuous
+        if not self.continuous:
+            self.policy = CateoricalPolicy(
+                self.obs_dim[-1], self.env.action_space.n
+                ,cnn=cnn).to(self.device)
+            self.online_critic = TwinnedQNetwork(
+            self.obs_dim[-1], self.env.action_space.n,
+            dueling_net=dueling_net,cnn=cnn).to(device=self.device)
+
+            self.target_critic = TwinnedQNetwork(
+            self.obs_dim[-1], self.env.action_space.n,
+            dueling_net=dueling_net,cnn=cnn).to(device=self.device).eval()
+        else:
+            self.policy = CateoricalPolicy(
+                self.obs_dim[-1], 1,continuous=True,action_dim=env.action_space.shape[0],cnn=cnn
+                ).to(self.device)
+            self.online_critic = TwinnedQNetwork(
+            self.obs_dim[-1], 1,
+            dueling_net=dueling_net,continuous=True,cnn=cnn).to(device=self.device)
+
+            self.target_critic = TwinnedQNetwork(
+            self.obs_dim[-1], 1,
+            dueling_net=dueling_net,continuous=True,cnn=cnn).to(device=self.device).eval()
+
 
         # Copy parameters of the learning network to the target network.
         self.target_critic.load_state_dict(self.online_critic.state_dict())
@@ -47,8 +64,11 @@ class SacdAgent(BaseAgent):
         self.q2_optim = Adam(self.online_critic.Q2.parameters(), lr=lr)
 
         # Target entropy is -log(1/|A|) * ratio (= maximum entropy * ratio).
-        self.target_entropy = \
-            -np.log(1.0 / self.env.action_space.n) * target_entropy_ratio
+        if self.continuous:
+            self.target_entropy =-np.prod(self.env.action_space.shape).astype(np.float32) *target_entropy_ratio
+        else:
+            self.target_entropy = \
+                -np.log(1.0 / self.env.action_space.n) * target_entropy_ratio
 
         # We optimize log(alpha), instead of alpha.
         self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
@@ -57,11 +77,21 @@ class SacdAgent(BaseAgent):
 
     def explore(self, state):
         # Act with randomness.
-        state = torch.FloatTensor(
-            state[None, ...]).to(self.device)
-        with torch.no_grad():
-            action, _, _ = self.policy.sample(state)
-        return action.item()
+        if self.cnn:
+            state = torch.ByteTensor(
+                state[None, ...]).to(self.device).float() / 255.
+        else:
+            state = torch.FloatTensor(
+                state[None, ...]).to(self.device)
+            
+        if self.continuous:
+            with torch.no_grad():
+                action, _ = self.policy.continuous_sample(state)
+            return action.cpu().numpy()
+        else:
+            with torch.no_grad():
+                action, _, _ = self.policy.sample(state)
+            return action.item()
 
     def exploit(self, state):
         # Act without randomness.
@@ -72,24 +102,35 @@ class SacdAgent(BaseAgent):
         return action.item()
 
     def update_target(self):
-        #self.target_critic.load_state_dict(self.online_critic.state_dict())
+        self.target_critic.load_state_dict(self.online_critic.state_dict())
         #polyak update:
-        for update_param,target_param in zip(self.online_critic.parameters(),self.target_critic.parameters()):
-            target_param.data.copy_((1-self.tau)*target_param + self.tau*update_param)
+        # for update_param,target_param in zip(self.online_critic.parameters(),self.target_critic.parameters()):
+        #     target_param.data.copy_((1-self.tau)*target_param + self.tau*update_param)
 
     def calc_current_q(self, states, actions, rewards, next_states, dones):
-        curr_q1, curr_q2 = self.online_critic(states)
-        curr_q1 = curr_q1.gather(1, actions.long())
-        curr_q2 = curr_q2.gather(1, actions.long())
+        if self.continuous:
+            curr_q1, curr_q2 = self.online_critic(states,actions)
+        else:
+            curr_q1, curr_q2 = self.online_critic(states)
+            curr_q1 = curr_q1.gather(1, actions.long())
+            curr_q2 = curr_q2.gather(1, actions.long())
         return curr_q1, curr_q2
 
     def calc_target_q(self, states, actions, rewards, next_states, dones):
-        with torch.no_grad():
-            _, action_probs, log_action_probs = self.policy.sample(next_states)
-            next_q1, next_q2 = self.target_critic(next_states)
-            next_q = (action_probs * (
-                torch.min(next_q1, next_q2) - self.alpha * log_action_probs
-                )).sum(dim=1, keepdim=True)
+        if self.continuous:
+            with torch.no_grad():
+                next_actions, log_action_probs = self.policy.continuous_sample(next_states)
+                next_q1, next_q2 = self.target_critic(next_states,next_actions)
+                next_q = (
+                    torch.min(next_q1, next_q2) - self.alpha * log_action_probs
+                    ).sum(dim=1, keepdim=True)
+        else:  
+            with torch.no_grad():
+                _, action_probs, log_action_probs = self.policy.sample(next_states)
+                next_q1, next_q2 = self.target_critic(next_states)
+                next_q = (action_probs * (
+                    torch.min(next_q1, next_q2) - self.alpha * log_action_probs
+                    )).sum(dim=1, keepdim=True)
 
         assert rewards.shape == next_q.shape
         return rewards + (1.0 - dones) * self.gamma_n * next_q
@@ -113,36 +154,50 @@ class SacdAgent(BaseAgent):
 
     def calc_policy_loss(self, batch, weights):
         states, actions, rewards, next_states, dones = batch
+        if self.continuous:
+            next_actions, log_action_probs = self.policy.continuous_sample(states)
+            with torch.no_grad():
+                q1 , q2 = self.online_critic(states,next_actions)
+                q = torch.min(q1, q2)
+            policy_loss = (weights * (self.alpha * log_action_probs - q)).mean()
 
-        # (Log of) probabilities to calculate expectations of Q and entropies.
-        _, action_probs, log_action_probs = self.policy.sample(states)
+            return policy_loss , log_action_probs.detach()
 
-        with torch.no_grad():
-            # Q for every actions to calculate expectations of Q.
-            q1, q2 = self.online_critic(states)
-            q = torch.min(q1, q2)
+        else:
+            # (Log of) probabilities to calculate expectations of Q and entropies.
+            _, action_probs, log_action_probs = self.policy.sample(states)
 
-        # Expectations of entropies.
-        entropies = -torch.sum(
-            action_probs * log_action_probs, dim=1, keepdim=True)
+            with torch.no_grad():
+                # Q for every actions to calculate expectations of Q.
+                q1, q2 = self.online_critic(states)
+                q = torch.min(q1, q2)
 
-        # Expectations of Q.
-        q = torch.sum(torch.min(q1, q2) * action_probs, dim=1, keepdim=True)
+            # Expectations of entropies.
+            entropies = -torch.sum(
+                action_probs * log_action_probs, dim=1, keepdim=True)
 
-        # Policy objective is maximization of (Q + alpha * entropy) with
-        # priority weights.
-        policy_loss = (weights * (- q - self.alpha * entropies)).mean()
+            # Expectations of Q.
+            q = torch.sum(torch.min(q1, q2) * action_probs, dim=1, keepdim=True)
 
-        return policy_loss, entropies.detach()
+            # Policy objective is maximization of (Q + alpha * entropy) with
+            # priority weights.
+            policy_loss = (weights * (- q - self.alpha * entropies)).mean()
+
+            return policy_loss, entropies.detach()
 
     def calc_entropy_loss(self, entropies, weights):
         assert not entropies.requires_grad
 
         # Intuitively, we increse alpha when entropy is less than target
         # entropy, vice versa.
-        entropy_loss = -torch.mean(
-            self.log_alpha * (self.target_entropy - entropies)
+        if self.continuous:
+            entropy_loss = -torch.mean(
+            self.log_alpha * (self.target_entropy + entropies)
             * weights)
+        else:
+            entropy_loss = -torch.mean(
+                self.log_alpha * (self.target_entropy - entropies)
+                * weights)
         return entropy_loss
 
     def save_models(self, save_dir):
