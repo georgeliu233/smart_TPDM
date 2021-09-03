@@ -1,0 +1,109 @@
+diff --git a/smarts/core/agent_interface.py b/smarts/core/agent_interface.py
+index 097c331..66edfd7 100644
+--- a/smarts/core/agent_interface.py
++++ b/smarts/core/agent_interface.py
+@@ -57,9 +57,9 @@ class RGB:
+     you would do RGB(width=256, height=256, resolution=100/256)
+     """
+ 
+-    width: int = 256
+-    height: int = 256
+-    resolution: float = 50 / 256
++    width: int = 80
++    height: int = 80
++    resolution: float = 50 / 80
+ 
+ 
+ @dataclass
+@@ -131,6 +131,7 @@ class AgentType(IntEnum):
+     """Agent performs linear trajectory interpolation."""
+     Imitation = 12
+     """Agent sees neighbor vehicles and performs actions based on imitation-learned model (acceleration, angular_velocity)."""
++    LHC_RL = 13
+ 
+ 
+ @dataclass(frozen=True)
+@@ -309,6 +310,17 @@ class AgentInterface:
+                 lidar=True,
+                 action=ActionSpaceType.Continuous,
+             )
++        
++        elif requested_type == AgentType.LHC_RL:  # Uses everything
++            interface = AgentInterface(
++                neighborhood_vehicles=True,
++                waypoints=True,
++                drivable_area_grid_map=True,
++                ogm=False,
++                rgb=True,
++                lidar=False,
++                action=ActionSpaceType.Lane,
++            )
+         # Uses low dimensional observations
+         elif requested_type == AgentType.StandardWithAbsoluteSteering:
+             interface = AgentInterface(
+@@ -331,6 +343,7 @@ class AgentInterface:
+         elif requested_type == AgentType.LanerWithSpeed:
+             interface = AgentInterface(
+                 waypoints=True,
++                rgb=True,
+                 action=ActionSpaceType.LaneWithContinuousSpeed,
+             )
+         # The trajectory tracking agent which receives a series of reference trajectory
+diff --git a/smarts/core/controllers/__init__.py b/smarts/core/controllers/__init__.py
+index 3c9aa09..b41db6a 100644
+--- a/smarts/core/controllers/__init__.py
++++ b/smarts/core/controllers/__init__.py
+@@ -50,6 +50,7 @@ class ActionSpaceType(Enum):
+     MPC = 7
+     TrajectoryWithTime = 8  # for pure interpolation provider
+     Imitation = 9
++    #LHC_RL = 10
+ 
+ 
+ class Controllers:
+@@ -99,6 +100,7 @@ class Controllers:
+                 action[0],
+                 action[1],
+             )
++
+         elif action_space == ActionSpaceType.Lane:
+             perform_lane_following = partial(
+                 LaneFollowingController.perform_lane_following,
+diff --git a/smarts/core/scenario.py b/smarts/core/scenario.py
+index 20d6868..0c1a500 100644
+--- a/smarts/core/scenario.py
++++ b/smarts/core/scenario.py
+@@ -97,7 +97,7 @@ class PositionalGoal(Goal):
+         return dist <= self.radius
+ 
+ 
+-@dataclass
++@dataclass(frozen=True)
+ class TraverseGoal(Goal):
+     """A TraverseGoal is satisfied whenever an Agent-driven vehicle
+     successfully finishes traversing a non-closed (acyclical) map
+diff --git a/smarts/core/smarts.py b/smarts/core/smarts.py
+index f5895b8..60cfa36 100644
+--- a/smarts/core/smarts.py
++++ b/smarts/core/smarts.py
+@@ -546,6 +546,7 @@ class SMARTS:
+                     agent_id
+                 )
+                 agent_action_space = agent_interface.action_space
++                
+                 if agent_action_space not in self._dynamic_action_spaces:
+                     # This is not a pybullet agent, but it has an avatar in this world
+                     # to make it's observations. Update the avatar to match the new
+diff --git a/smarts/env/hiway_env.py b/smarts/env/hiway_env.py
+index cca1380..35e1557 100644
+--- a/smarts/env/hiway_env.py
++++ b/smarts/env/hiway_env.py
+@@ -101,7 +101,7 @@ class HiWayEnv(gym.Env):
+         agent_interfaces = {
+             agent_id: agent.interface for agent_id, agent in agent_specs.items()
+         }
+-
++        #print("Agent-interfaces:",agent_interfaces)
+         envision_client = None
+         if not headless or envision_record_data_replay_path:
+             envision_client = Envision(
