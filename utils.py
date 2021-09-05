@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil,floor
 
 def cnn_calculater(img_input,cnn_params_inputs):
     """
@@ -19,15 +19,16 @@ def cnn_calculater(img_input,cnn_params_inputs):
             H = (H-kernel_size[0]+2*pad)/stride+1
             W = (W-kernel_size[1]+2*pad)/stride+1
         else:
-            H = ceil((H-kernel_size+2*pad)/stride)+1
-            W = ceil((W-kernel_size+2*pad)/stride)+1
+            H = floor((H-kernel_size+2*pad)/stride)+1
+            W = floor((W-kernel_size+2*pad)/stride)+1
         C = out_channel
     print(H,W,C)
 
 img_input = (80,80,3)
 cnn_params_input = [
-    (32,8,4,0),
-    (64,4,2,0),
-    (64,3,1,0)
+    (16,3,3,0),
+    (64,3,2,0),
+    (128,3,2,0),
+    (256,3,2,0)
 ]
 cnn_calculater(img_input,cnn_params_input)

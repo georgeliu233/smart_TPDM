@@ -30,14 +30,27 @@ class DQNBase(BaseNetwork):
     def __init__(self, num_channels):
         super(DQNBase, self).__init__()
 
+        # self.net = nn.Sequential(
+        #     nn.Conv2d(num_channels, 32, kernel_size=8, stride=4, padding=0),
+        #     nn.ReLU(),
+        #     nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
+        #     nn.ReLU(),
+        #     nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+        #     nn.ReLU(),
+        #     Flatten(),
+        # ).apply(initialize_weights_he)
+
         self.net = nn.Sequential(
-            nn.Conv2d(num_channels, 32, kernel_size=8, stride=4, padding=0),
+            nn.Conv2d(num_channels, 16, kernel_size=3, stride=3, padding=0),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
+            nn.Conv2d(16, 64, kernel_size=3, stride=2, padding=0),
             nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=0),
             nn.ReLU(),
-            Flatten(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=0),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(1),
+            Flatten()
         ).apply(initialize_weights_he)
 
     def forward(self, states):
@@ -53,7 +66,8 @@ class QNetwork(BaseNetwork):
         if not shared:
             if cnn:
                 self.conv = DQNBase(num_channels)
-                out_dim = 7*7*64
+                #out_dim = 6*6*64
+                out_dim = 256
             else:
                 self.conv = nn.Sequential(
                     nn.Linear(16, 256),
@@ -65,11 +79,11 @@ class QNetwork(BaseNetwork):
 
         if not dueling_net:
             self.head = nn.Sequential(
-                nn.Linear(out_dim, 128),
+                nn.Linear(out_dim+64, 128),
                 nn.ReLU(inplace=True),
-                nn.Linear(128, 64),
+                nn.Linear(128, 32),
                 nn.ReLU(inplace=True),
-                nn.Linear(64, num_actions))
+                nn.Linear(32, num_actions))
         else:
             self.a_head = nn.Sequential(
                 nn.Linear(out_dim, 128),
@@ -85,7 +99,9 @@ class QNetwork(BaseNetwork):
                 nn.Linear(64, 1))
         
         if continuous:
-            self.action_trans = nn.Linear(action_dim,out_dim)
+            self.action_trans = nn.Sequential(
+                 nn.Linear(action_dim,64),
+                 nn.ReLU(inplace=True))
 
         self.shared = shared
         self.dueling_net = dueling_net
@@ -96,7 +112,13 @@ class QNetwork(BaseNetwork):
             states = self.conv(states)
 
         if self.continuous:
-            states = states + self.action_trans(actions)
+            # print(actions.shape)
+            actions_1 = self.action_trans(actions)
+            # print(actions_1.shape)
+            # print(states.shape)
+            states = torch.cat([states,actions_1],dim=1)
+            # print(states.shape)
+            #states + self.action_trans(actions)
         if not self.dueling_net:
             return self.head(states)
         else:
@@ -104,13 +126,55 @@ class QNetwork(BaseNetwork):
             v = self.v_head(states)
             return v + a - a.mean(1, keepdim=True)
 
+class ValueNetwork(BaseNetwork):
+    def __init__(self,num_channels,state_dim=None,shared=False,cnn=False):
+        super().__init__()
+        self.shared = shared
+        if not shared:
+            if cnn:
+                self.conv = DQNBase(num_channels)
+                #out_dim = 6*6*64
+                out_dim = 256
+            else:
+                self.conv = nn.Sequential(
+                    nn.Linear(16, 256),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(256, 256),
+                    nn.ReLU(inplace=True)
+                )
+                out_dim = 256
+            
+            self.value_head = nn.Sequential(
+            nn.Linear(out_dim, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 32),
+            nn.ReLU(inplace=True),
+            nn.Linear(32, 1))
+        
+        else:
+            self.value_head = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 32),
+            nn.ReLU(inplace=True),
+            nn.Linear(32, 1))
+
+
+    def forward(self,states):
+        if not self.shared:
+            states = self.conv(states)
+        return self.value_head(states)
 
 class TwinnedQNetwork(BaseNetwork):
     def __init__(self, num_channels, num_actions, shared=False,
-                 dueling_net=False,cnn=False,continuous=False):
+                 dueling_net=False,cnn=False,continuous=False,use_value_net=False):
         super().__init__()
         self.Q1 = QNetwork(num_channels, num_actions, shared, dueling_net,cnn,continuous)
         self.Q2 = QNetwork(num_channels, num_actions, shared, dueling_net,cnn,continuous)
+        self.Share_conv = DQNBase(num_channels)
+        if use_value_net:
+            self.value_net = ValueNetwork(num_channels,shared=shared,cnn=cnn)
+        self.use_value_net = use_value_net
         self.continuous = continuous
 
     def forward(self, states,action=None):
@@ -120,7 +184,12 @@ class TwinnedQNetwork(BaseNetwork):
         else: 
             q1 = self.Q1(states)
             q2 = self.Q2(states)
-        return q1, q2
+        
+        if self.use_value_net:
+            value = self.value_net(states)
+        else:
+            value=None
+        return q1, q2,value
 
 
 class CateoricalPolicy(BaseNetwork):
@@ -132,7 +201,8 @@ class CateoricalPolicy(BaseNetwork):
 
         if cnn:
             self.conv = DQNBase(num_channels)
-            out_dim = 7*7*64
+            #out_dim = 6*6*64
+            out_dim = 256
         else:
             self.conv = nn.Sequential(
                 nn.Linear(16, 256),
@@ -145,9 +215,9 @@ class CateoricalPolicy(BaseNetwork):
         self.head = nn.Sequential(
             nn.Linear(out_dim, 128),
             nn.ReLU(inplace=True),
-            nn.Linear(128, 64),
+            nn.Linear(128, 32),
             nn.ReLU(inplace=True),
-            nn.Linear(64, num_actions))
+            nn.Linear(32, num_actions))
         
         self.action_trans = nn.Sequential(
             nn.Linear(action_dim,out_dim)
@@ -156,10 +226,10 @@ class CateoricalPolicy(BaseNetwork):
         self.head_continuous = nn.Sequential(
             nn.Linear(out_dim, 128),
             nn.ReLU(inplace=True),
-            nn.Linear(128, 64),
+            nn.Linear(128, 32),
             nn.ReLU(inplace=True))
         
-        self.mu_std_trans =  nn.Linear(64, 2*action_dim)
+        self.mu_std_trans =  nn.Linear(32, 2*action_dim)
 
         self.shared = shared
         self.continuous = continuous
@@ -194,7 +264,7 @@ class CateoricalPolicy(BaseNetwork):
         states = self.head_continuous(states)
         mu, log_std = self.mu_std_trans(states).chunk(2, dim=-1)
 
-        log_std = torch.tanh(log_std)
+        #log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
         # log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std +
         #                                                              1)
@@ -204,7 +274,7 @@ class CateoricalPolicy(BaseNetwork):
 
         normal = Normal(mu,std)
         # for reparameterization trick  (mean + std*N(0,1))
-        x_t = normal.rsample()
+        x_t = normal.sample()
         actions = torch.tanh(x_t)
 
         log_prob = normal.log_prob(x_t)

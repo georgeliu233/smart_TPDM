@@ -16,14 +16,16 @@ class BaseAgent(ABC):
                  target_entropy_ratio=0.98, start_steps=20000,
                  update_interval=4, target_update_interval=8000,
                  use_per=False, num_eval_steps=125000, max_episode_steps=27000,
-                 log_interval=10, eval_interval=1000, cuda=True, seed=0,obs_dim=[16],continuous=False,
-                 action_space=None,cnn=False):
+                 log_interval=10, eval_interval=1000, cuda=True, seed=0,obs_dim=(80,80,3),continuous=False,
+                 action_space=None,cnn=True,simple_reward=False,use_value_net=False):
         super().__init__()
         self.env = env
         self.test_env = test_env
         self.obs_dim  = obs_dim
         self.continuous = continuous
         self.cnn=cnn
+        self.simple_reward = simple_reward
+        self.use_value_net = use_value_net
         # Set seed.
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -80,6 +82,8 @@ class BaseAgent(ABC):
         self.log_interval = log_interval
         self.eval_interval = eval_interval
 
+        self.ep_cnt = 0
+
         self.action_choice = ["keep_lane","slow_down","change_lane_left","change_lane_right"]
 
     def run(self):
@@ -122,6 +126,10 @@ class BaseAgent(ABC):
 
     @abstractmethod
     def calc_entropy_loss(self, entropies, weights):
+        pass
+
+    @abstractmethod
+    def compute_td_error(self, batch):
         pass
     
     def observation_adapter(self,env_obs):
@@ -197,7 +205,7 @@ class BaseAgent(ABC):
             
             if self.continuous:
                 choice_action = []
-                MAX_SPEED = 10
+                MAX_SPEED = 15
                 choice_action.append((action[0]+1)/2*MAX_SPEED)
                 if action[1]<= -1/3:
                     choice_action.append(-1)
@@ -217,31 +225,43 @@ class BaseAgent(ABC):
                 next_state = next_obs["Agent-LHC"].top_down_rgb.data
             else:
                 next_state = self.observation_adapter(next_obs["Agent-LHC"])
+
             done_events = next_obs["Agent-LHC"].events
             if done_events.collisions !=[]:
                 reward["Agent-LHC"] -= 10
             if done_events.wrong_way:
                 reward["Agent-LHC"] -= 2
-                
-            # Clip reward to [-1.0, 1.0].
+            
+             # Clip reward to [-1.0, 1.0].
             #clipped_reward = max(min(reward, 1.0), -1.0)
 
             # To calculate efficiently, set priority=max_priority here.
-            self.memory.append(state, action, reward["Agent-LHC"], next_state, done["Agent-LHC"])
+
+            if self.simple_reward:
+                r = 0
+                if done_events.reached_goal or (done["Agent-LHC"] and not done_events.reached_max_episode_steps):
+                    r = 1
+                if done_events.collisions !=[]:
+                    r = -1
+                self.memory.append(state, action, r, next_state, done["Agent-LHC"])
+                episode_return += r
+            else:
+                self.memory.append(state, action, reward["Agent-LHC"], next_state, done["Agent-LHC"])
+                episode_return += reward["Agent-LHC"]
 
             self.steps += 1
             episode_steps += 1
-            episode_return += reward["Agent-LHC"]
+            
             state = next_state
 
             if self.is_update():
                 self.learn()
 
-            if self.steps % self.target_update_interval == 0:
-                self.update_target()
+            # if self.steps % self.target_update_interval == 0:
+            #     self.update_target()
 
-            if self.steps % self.eval_interval == 0 and self.test_env is not None:
-                self.evaluate()
+            if self.steps % self.eval_interval == 0:
+                #self.evaluate()
                 self.save_models(os.path.join(self.model_dir, 'final'))
 
         # We log running mean of training rewards.
@@ -249,7 +269,14 @@ class BaseAgent(ABC):
         self.return_log.append(episode_return)
         self.step_log.append(self.steps)
 
-        with open('/home/haochen/SMARTS_test_TPDM/log_saccon_cnn_left.json','w',encoding='utf-8') as writer:
+        if len(self.step_log)==1:
+            ep_length = self.step_log[-1]
+        else:
+            ep_length = self.step_log[-1] - self.step_log[-2]
+        
+        print('|Episode:',self.ep_cnt,'|ep-length:',ep_length,"|total_steps:",self.steps,"|Episode-return:",episode_return,'|')
+        self.ep_cnt += 1
+        with open('/home/haochen/SMARTS_test_TPDM/log_saccon_simple_CNN_left_4.json','w',encoding='utf-8') as writer:
             writer.write(json.dumps([self.return_log,self.step_log],ensure_ascii=False,indent=4))
         if self.episodes % self.log_interval == 0:
             self.writer.add_scalar(
@@ -263,10 +290,13 @@ class BaseAgent(ABC):
         assert hasattr(self, 'q1_optim') and hasattr(self, 'q2_optim') and\
             hasattr(self, 'policy_optim') and hasattr(self, 'alpha_optim')
 
+        if self.use_value_net:
+            assert hasattr(self,'value_optim')
         self.learning_steps += 1
 
         if self.use_per:
             batch, weights = self.memory.sample(self.batch_size)
+            #weights = 1.
         else:
             batch = self.memory.sample(self.batch_size)
             # Set priority weights to 1 when we don't use PER.
@@ -274,17 +304,26 @@ class BaseAgent(ABC):
 
         q1_loss, q2_loss, errors, mean_q1, mean_q2 = \
             self.calc_critic_loss(batch, weights)
-        policy_loss, entropies = self.calc_policy_loss(batch, weights)
+        policy_loss, entropies,value_loss,td_errors = self.calc_policy_loss(batch, weights)
         entropy_loss = self.calc_entropy_loss(entropies, weights)
 
         update_params(self.q1_optim, q1_loss)
         update_params(self.q2_optim, q2_loss)
+        
+
+        if self.use_value_net:
+            update_params(self.value_optim,value_loss)
+            errors = td_errors
+        
+            self.update_target()
+        
         update_params(self.policy_optim, policy_loss)
         update_params(self.alpha_optim, entropy_loss)
 
         self.alpha = self.log_alpha.exp()
 
         if self.use_per:
+            errors = self.compute_td_error(batch)
             self.memory.update_priority(errors)
 
         if self.learning_steps % self.log_interval == 0:

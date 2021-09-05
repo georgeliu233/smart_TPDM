@@ -106,6 +106,8 @@ class LazyMemory(dict):
             (batch_size, *self.state_shape), dtype=ty)
         next_states = np.empty(
             (batch_size, *self.state_shape), dtype=ty)
+        
+        #print(states.shape)
 
         for i, index in enumerate(indices):
             _index = np.mod(index+bias, self.capacity)
@@ -117,9 +119,12 @@ class LazyMemory(dict):
             next_states = torch.FloatTensor(
                 next_states).to(self.device).float() #/ 255.
         else:
-            states = torch.ByteTensor(states).to(self.device).float() / 255.
+            states = np.ascontiguousarray(np.transpose(states,(0,3,1,2)),np.int8)
+            states = torch.ByteTensor(states).to(self.device).float() #/ 255.
+            next_states = np.ascontiguousarray(np.transpose(next_states,(0,3,1,2)),np.int8)
             next_states = torch.ByteTensor(
-                next_states).to(self.device).float() / 255.
+                next_states).to(self.device).float() #/ 255.
+
         if self.contiuous:
             actions = np.empty((batch_size, *self.action_shape), dtype=np.float32)
             for i, index in enumerate(indices):
