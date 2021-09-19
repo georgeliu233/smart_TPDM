@@ -119,9 +119,9 @@ class LazyMemory(dict):
             next_states = torch.FloatTensor(
                 next_states).to(self.device).float() #/ 255.
         else:
-            states = np.ascontiguousarray(np.transpose(states,(0,3,1,2)),np.int8)
+            states = np.ascontiguousarray(np.transpose(states,(0,3,1,2)),np.int32)
             states = torch.ByteTensor(states).to(self.device).float() #/ 255.
-            next_states = np.ascontiguousarray(np.transpose(next_states,(0,3,1,2)),np.int8)
+            next_states = np.ascontiguousarray(np.transpose(next_states,(0,3,1,2)),np.int32)
             next_states = torch.ByteTensor(
                 next_states).to(self.device).float() #/ 255.
 

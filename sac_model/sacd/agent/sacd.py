@@ -17,13 +17,13 @@ class SacdAgent(BaseAgent):
                  use_per=False, dueling_net=False, num_eval_steps=125000,
                  max_episode_steps=27000, log_interval=10, eval_interval=1000,
                  cuda=True, seed=0,tau=0.005,obs_dim=[16],continuous=False,action_space=None,
-                 cnn=False,simple_reward=False,use_value_net=False):
+                 cnn=False,simple_reward=False,use_value_net=False,use_cpprb=False):
         super().__init__(
             env, test_env, log_dir, num_steps, batch_size, memory_size, gamma,
             multi_step, target_entropy_ratio, start_steps, update_interval,
             target_update_interval, use_per, num_eval_steps, max_episode_steps,
             log_interval, eval_interval, cuda, seed,obs_dim,continuous,action_space,cnn,simple_reward,
-            use_value_net)
+            use_value_net,use_cpprb)
         
         self.tau = tau
         self.cnn = cnn
@@ -84,7 +84,7 @@ class SacdAgent(BaseAgent):
     def explore(self, state):
         # Act with randomness.
         if self.cnn:
-            state = np.ascontiguousarray(np.transpose(state,(2,0,1)),np.int8)
+            state = np.ascontiguousarray(np.transpose(state,(2,0,1)),np.int32)
             state = torch.ByteTensor(
                 state[None, ...]).to(self.device).float() #/ 255.
         else:
@@ -177,11 +177,12 @@ class SacdAgent(BaseAgent):
            
         if self.use_value_net:
             states, actions, rewards, next_states, dones = batch 
-            next_actions, log_action_probs = self.policy.continuous_sample(states)
-            _,_,values = self.online_critic(states,actions)
             with torch.no_grad():
-                target_v = q - self.alpha * log_action_probs
-            td_error = target_v - values
+                current_q1,_ ,_ = self.online_critic(states,actions)
+                _,_,vf_next_target = self.target_critic(next_states,actions)
+                target_q = rewards + (1.0 - dones) * self.gamma_n * vf_next_target
+
+                td_error = target_q - current_q1
         else:
             curr_q1, curr_q2,_ = self.calc_current_q(*batch)
             target_q = self.calc_target_q(*batch)

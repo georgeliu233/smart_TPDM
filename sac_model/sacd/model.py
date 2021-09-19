@@ -2,7 +2,7 @@ from numpy.random import normal
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.distributions import Categorical,Normal
+from torch.distributions import Categorical,Normal,MultivariateNormal
 
 
 def initialize_weights_he(m):
@@ -71,19 +71,19 @@ class QNetwork(BaseNetwork):
             else:
                 self.conv = nn.Sequential(
                     nn.Linear(16, 256),
-                    nn.ReLU(inplace=True),
+                    nn.ReLU(),
                     nn.Linear(256, 256),
-                    nn.ReLU(inplace=True)
+                    nn.ReLU()
                 )
                 out_dim = 256
 
         if not dueling_net:
             self.head = nn.Sequential(
                 nn.Linear(out_dim+64, 128),
-                nn.ReLU(inplace=True),
+                nn.ReLU(),
                 nn.Linear(128, 32),
-                nn.ReLU(inplace=True),
-                nn.Linear(32, num_actions))
+                nn.ReLU(),
+                nn.Linear(32, 1))
         else:
             self.a_head = nn.Sequential(
                 nn.Linear(out_dim, 128),
@@ -101,7 +101,7 @@ class QNetwork(BaseNetwork):
         if continuous:
             self.action_trans = nn.Sequential(
                  nn.Linear(action_dim,64),
-                 nn.ReLU(inplace=True))
+                 nn.ReLU())
 
         self.shared = shared
         self.dueling_net = dueling_net
@@ -138,17 +138,17 @@ class ValueNetwork(BaseNetwork):
             else:
                 self.conv = nn.Sequential(
                     nn.Linear(16, 256),
-                    nn.ReLU(inplace=True),
+                    nn.ReLU(),
                     nn.Linear(256, 256),
-                    nn.ReLU(inplace=True)
+                    nn.ReLU()
                 )
                 out_dim = 256
             
             self.value_head = nn.Sequential(
             nn.Linear(out_dim, 128),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(128, 32),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(32, 1))
         
         else:
@@ -206,17 +206,17 @@ class CateoricalPolicy(BaseNetwork):
         else:
             self.conv = nn.Sequential(
                 nn.Linear(16, 256),
-                nn.ReLU(inplace=True),
+                nn.ReLU(),
                 nn.Linear(256, 256),
-                nn.ReLU(inplace=True)
+                nn.ReLU()
             )
             out_dim = 256
 
         self.head = nn.Sequential(
             nn.Linear(out_dim, 128),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(128, 32),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(32, num_actions))
         
         self.action_trans = nn.Sequential(
@@ -225,15 +225,18 @@ class CateoricalPolicy(BaseNetwork):
 
         self.head_continuous = nn.Sequential(
             nn.Linear(out_dim, 128),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(128, 32),
-            nn.ReLU(inplace=True))
+            nn.ReLU())
         
-        self.mu_std_trans =  nn.Linear(32, 2*action_dim)
+        self.mu_trans =  nn.Linear(32, action_dim)
+
+        self.std_trans =  nn.Linear(32, action_dim)
 
         self.shared = shared
         self.continuous = continuous
         self.log_std_bounds = log_std_bounds
+        self.action_dim = action_dim
 
     def act(self, states):
         if not self.shared:
@@ -262,7 +265,7 @@ class CateoricalPolicy(BaseNetwork):
         if not self.shared:
             states = self.conv(states)
         states = self.head_continuous(states)
-        mu, log_std = self.mu_std_trans(states).chunk(2, dim=-1)
+        mu,log_std = self.mu_trans(states),self.std_trans(states)
 
         #log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
@@ -272,15 +275,21 @@ class CateoricalPolicy(BaseNetwork):
 
         std = log_std.exp()
 
-        normal = Normal(mu,std)
+        var_mat = torch.diag_embed(std)
+
+        #print(var_mat.shape)
+
+        normal = MultivariateNormal(mu,var_mat)
         # for reparameterization trick  (mean + std*N(0,1))
-        x_t = normal.sample()
+        x_t = normal.rsample()
         actions = torch.tanh(x_t)
 
         log_prob = normal.log_prob(x_t)
+        #print(log_prob.shape)
         # Enforcing Action Bound
-        log_prob -= torch.log((1 - actions.pow(2)) + 1e-6)
-        log_prob = log_prob.sum(1, keepdims=True)
+        log_prob -= torch.log((1 - actions.pow(2)) + 1e-6).sum(1)
+        #log_prob = log_prob.sum(1, keepdims=True)
+        #print(log_prob.shape)
 
         return actions, log_prob
 

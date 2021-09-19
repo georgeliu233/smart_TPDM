@@ -7,6 +7,7 @@ from tensorboardX import SummaryWriter
 import json
 from sacd.memory import LazyMultiStepMemory, LazyPrioritizedMultiStepMemory
 from sacd.utils import update_params, RunningMeanStats
+from sacd.memory.cprb_buffer import get_replay_buffer
 
 
 class BaseAgent(ABC):
@@ -17,7 +18,7 @@ class BaseAgent(ABC):
                  update_interval=4, target_update_interval=8000,
                  use_per=False, num_eval_steps=125000, max_episode_steps=27000,
                  log_interval=10, eval_interval=1000, cuda=True, seed=0,obs_dim=(80,80,3),continuous=False,
-                 action_space=None,cnn=True,simple_reward=False,use_value_net=False):
+                 action_space=None,cnn=True,simple_reward=False,use_value_net=False,use_cpprb=True):
         super().__init__()
         self.env = env
         self.test_env = test_env
@@ -26,6 +27,7 @@ class BaseAgent(ABC):
         self.cnn=cnn
         self.simple_reward = simple_reward
         self.use_value_net = use_value_net
+        self.use_cpprb = use_cpprb
         # Set seed.
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -39,20 +41,24 @@ class BaseAgent(ABC):
             "cuda" if cuda and torch.cuda.is_available() else "cpu")
 
         # LazyMemory efficiently stores FrameStacked states.
-        if use_per:
-            beta_steps = (num_steps - start_steps) / update_interval
-            self.memory = LazyPrioritizedMultiStepMemory(
-                capacity=memory_size,
-                state_shape=self.obs_dim,
-                device=self.device, gamma=gamma, multi_step=multi_step,
-                action_shape=action_space,
-                beta_steps=beta_steps,continous=continuous,cnn=cnn)
+        if use_cpprb:
+            self.memory =get_replay_buffer(memory_capacity=memory_size,env=env,
+            discount=gamma,use_nstep_rb=True,n_step=multi_step,use_prioritized_rb=use_per)
         else:
-            self.memory = LazyMultiStepMemory(
-                capacity=memory_size,
-                state_shape=self.obs_dim,
-                action_shape=action_space,
-                device=self.device, gamma=gamma, multi_step=multi_step,continuous=continuous,cnn=cnn)
+            if use_per:
+                beta_steps = (num_steps - start_steps) / update_interval
+                self.memory = LazyPrioritizedMultiStepMemory(
+                    capacity=memory_size,
+                    state_shape=self.obs_dim,
+                    device=self.device, gamma=gamma, multi_step=multi_step,
+                    action_shape=action_space,
+                    beta_steps=beta_steps,continous=continuous,cnn=cnn)
+            else:
+                self.memory = LazyMultiStepMemory(
+                    capacity=memory_size,
+                    state_shape=self.obs_dim,
+                    action_shape=action_space,
+                    device=self.device, gamma=gamma, multi_step=multi_step,continuous=continuous,cnn=cnn)
 
         self.log_dir = log_dir
         self.model_dir = os.path.join(log_dir, 'model')
@@ -131,6 +137,10 @@ class BaseAgent(ABC):
     @abstractmethod
     def compute_td_error(self, batch):
         pass
+
+    @abstractmethod
+    def train_body(self, batch):
+        pass
     
     def observation_adapter(self,env_obs):
         ego = env_obs.ego_vehicle_state
@@ -165,6 +175,7 @@ class BaseAgent(ABC):
                                             math.pow(ego.position[1]-neighborhood_vehicle.position[1], 2) for neighborhood_vehicle in neighborhood_vehicles])
 
             nearest_vehicle_indexes = np.argsort(position_differences)
+            #print(nearest_vehicle_indexes.shape[0])
             for i in range(min(3, nearest_vehicle_indexes.shape[0])):
                 relative_neighbor_distance[i] = np.clip(
                     (ego.position[:2]-neighborhood_vehicles[nearest_vehicle_indexes[i]].position[:2]), -10, 10).tolist()
@@ -205,7 +216,7 @@ class BaseAgent(ABC):
             
             if self.continuous:
                 choice_action = []
-                MAX_SPEED = 15
+                MAX_SPEED = 10
                 choice_action.append((action[0]+1)/2*MAX_SPEED)
                 if action[1]<= -1/3:
                     choice_action.append(-1)
@@ -243,10 +254,17 @@ class BaseAgent(ABC):
                     r = 1
                 if done_events.collisions !=[]:
                     r = -1
-                self.memory.append(state, action, r, next_state, done["Agent-LHC"])
+                
+                if self.use_cpprb:
+                    self.memory.add(obs=state,act=action,rew=r,next_obs=next_state, done= done["Agent-LHC"])
+                else:
+                    self.memory.append(state, action, r, next_state, done["Agent-LHC"])
                 episode_return += r
             else:
-                self.memory.append(state, action, reward["Agent-LHC"], next_state, done["Agent-LHC"])
+                if self.use_cpprb:
+                    self.memory.add(obs=state,act=action,rew=r,next_obs=next_state, done= done["Agent-LHC"])
+                else:
+                    self.memory.append(state, action, r, next_state, done["Agent-LHC"])
                 episode_return += reward["Agent-LHC"]
 
             self.steps += 1
@@ -265,6 +283,7 @@ class BaseAgent(ABC):
                 self.save_models(os.path.join(self.model_dir, 'final'))
 
         # We log running mean of training rewards.
+        self.memory.on_episode_end()
         self.train_return.append(episode_return)
         self.return_log.append(episode_return)
         self.step_log.append(self.steps)
@@ -295,38 +314,60 @@ class BaseAgent(ABC):
         self.learning_steps += 1
 
         if self.use_per:
-            batch, weights = self.memory.sample(self.batch_size)
+            if self.use_cpprb:
+                samples = self.memory.sample(self.batch_size)
+                states,actions,next_states,rewards,dones = samples["obs"], samples["act"], samples["next_obs"],samples["rew"], np.array(samples["done"], dtype=np.float32)
+
+                states = np.ascontiguousarray(np.transpose(states,(0,3,1,2)),np.int32)
+                states = torch.ByteTensor(states).to(self.device).float() #/ 255.
+                next_states = np.ascontiguousarray(np.transpose(next_states,(0,3,1,2)),np.int32)
+                next_states = torch.ByteTensor(
+                    next_states).to(self.device).float() #/ 255.
+
+                actions = torch.FloatTensor(actions).to(self.device)
+                rewards = torch.FloatTensor(rewards).to(self.device)
+                dones = torch.FloatTensor(dones).to(self.device)
+
+                batch = states, actions, rewards, next_states, dones
+                weights = 1.    
+            else:
+                batch, weights = self.memory.sample(self.batch_size)
             #weights = 1.
         else:
             batch = self.memory.sample(self.batch_size)
             # Set priority weights to 1 when we don't use PER.
             weights = 1.
 
-        q1_loss, q2_loss, errors, mean_q1, mean_q2 = \
-            self.calc_critic_loss(batch, weights)
-        policy_loss, entropies,value_loss,td_errors = self.calc_policy_loss(batch, weights)
-        entropy_loss = self.calc_entropy_loss(entropies, weights)
+        # q1_loss, q2_loss, errors, mean_q1, mean_q2 = \
+        #     self.calc_critic_loss(batch, weights)
+        # policy_loss, entropies,value_loss,td_errors = self.calc_policy_loss(batch, weights)
+        # entropy_loss = self.calc_entropy_loss(entropies, weights)
 
-        update_params(self.q1_optim, q1_loss)
-        update_params(self.q2_optim, q2_loss)
+        # update_params(self.q1_optim, q1_loss)
+        # update_params(self.q2_optim, q2_loss)
         
 
-        if self.use_value_net:
-            update_params(self.value_optim,value_loss)
-            errors = td_errors
+        # if self.use_value_net:
+        #     update_params(self.value_optim,value_loss)
+        #     errors = td_errors
         
-            self.update_target()
+        #     self.update_target()
         
-        update_params(self.policy_optim, policy_loss)
-        update_params(self.alpha_optim, entropy_loss)
+        # update_params(self.policy_optim, policy_loss)
+        # update_params(self.alpha_optim, entropy_loss)
 
-        self.alpha = self.log_alpha.exp()
+        # self.alpha = self.log_alpha.exp()
+
+        self.train_body(batch)
 
         if self.use_per:
             errors = self.compute_td_error(batch)
-            self.memory.update_priority(errors)
+            if self.use_cpprb:
+                self.memory.update_priorities(samples["indexes"],errors.cpu().numpy())
+            else:
+                self.memory.update_priority(errors)
 
-        if self.learning_steps % self.log_interval == 0:
+        if self.learning_steps % self.log_interval == 0 and False:
             self.writer.add_scalar(
                 'loss/Q1', q1_loss.detach().item(),
                 self.learning_steps)
