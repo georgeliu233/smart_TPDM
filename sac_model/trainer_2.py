@@ -2,10 +2,12 @@ import os
 import time
 import logging
 import argparse
-
+import json
 import numpy as np
 import tensorflow as tf
 from gym.spaces import Box
+from collections import deque
+import math
 
 from tf2rl.experiments.utils import save_path, frames_to_gif
 from tf2rl.misc.get_replay_buffer import get_replay_buffer
@@ -26,7 +28,10 @@ class Trainer:
             policy,
             env,
             args,
-            test_env=None):
+            test_env=None,
+            state_input=False,
+            n_steps=0,
+            lstm=False):
         if isinstance(args, dict):
             _args = args
             args = policy.__class__.get_argument(Trainer.get_argument())
@@ -38,9 +43,12 @@ class Trainer:
                     raise ValueError(f"{k} is invalid parameter.")
         self.return_log,self.step_log = [],[]
         self.eval_log,self.eval_steps = [],[]
+        self.state_input = state_input
         self._set_from_args(args)
         self._policy = policy
         self._env = env
+        self.n_steps = n_steps
+        self.lstm = lstm
         self._test_env = self._env if test_env is None else test_env
         if self._normalize_obs:
             assert isinstance(env.observation_space, Box)
@@ -63,6 +71,7 @@ class Trainer:
         self.writer = tf.summary.create_file_writer(self._output_dir)
         self.writer.set_as_default()
 
+
     def _set_check_point(self, model_dir):
         # Save and restore model
         self._checkpoint = tf.train.Checkpoint(policy=self._policy)
@@ -75,7 +84,64 @@ class Trainer:
             self._checkpoint.restore(self._latest_path_ckpt)
             self.logger.info("Restored {}".format(self._latest_path_ckpt))
 
+    def observation_adapter(self,env_obs):
+        ego = env_obs.ego_vehicle_state
+        waypoint_paths = env_obs.waypoint_paths
+        wps = [path[0] for path in waypoint_paths]
+        # distance of vehicle from center of lane
+        # closest_wp = min(wps, key=lambda wp: wp.dist_to(ego.position))
+
+        dist_from_centers = []
+        angle_errors = []
+        if len(wps)<3:
+            for _ in range(3-len(wps)):
+                dist_from_centers.append(-1)
+                angle_errors.append(-1)
+        for wp in wps:
+            signed_dist_from_center = wp.signed_lateral_error(ego.position)
+            lane_hwidth = wp.lane_width * 0.5
+            dist_from_centers.append(signed_dist_from_center / lane_hwidth)
+            angle_errors.append(wp.relative_heading(ego.heading))
+        
+
+
+        neighborhood_vehicles = env_obs.neighborhood_vehicle_states
+        relative_neighbor_distance = [np.array([10, 10])]*3
+
+        # no neighborhood vechicle
+        if neighborhood_vehicles == None or len(neighborhood_vehicles) == 0:
+            relative_neighbor_distance = [
+                distance.tolist() for distance in relative_neighbor_distance]
+        else:
+            position_differences = np.array([math.pow(ego.position[0]-neighborhood_vehicle.position[0], 2) +
+                                            math.pow(ego.position[1]-neighborhood_vehicle.position[1], 2) for neighborhood_vehicle in neighborhood_vehicles])
+
+            nearest_vehicle_indexes = np.argsort(position_differences)
+            for i in range(min(3, nearest_vehicle_indexes.shape[0])):
+                relative_neighbor_distance[i] = np.clip(
+                    (ego.position[:2]-neighborhood_vehicles[nearest_vehicle_indexes[i]].position[:2]), -10, 10).tolist()
+
+        distances = [
+                diff for diffs in relative_neighbor_distance for diff in diffs]
+        # print(len(dist_from_centers))
+        # print(len(angle_errors))
+        # print(len(ego.position[:2].tolist()))
+        # print(len(distances))
+
+        # observations =  np.array(
+        #     dist_from_centers + angle_errors+ego.position[:2].tolist()+[ego.speed,ego.steering]+distances,
+        #     dtype=np.float32,
+        # )
+        observations =  np.array(
+            dist_from_centers + angle_errors+ego.position[:2].tolist()+[ego.steering]+distances,
+            dtype=np.float32,
+        )
+        assert observations.shape[-1]==15,observations.shape
+        return observations
+
     def __call__(self):
+        print('Start-training.....')
+        
         if self._evaluate:
             self.evaluate_policy_continuously()
 
@@ -92,18 +158,25 @@ class Trainer:
 
 
         obs = self._env.reset()
-        obs = obs['Agent-LHC'].top_down_rgb.data
-
+        if self.state_input:
+            obs = self.observation_adapter(obs['Agent-LHC'])
+        else:
+            obs = obs['Agent-LHC'].top_down_rgb.data
+        
+        if self.lstm:
+            buffer_queue = deque(maxlen=self.n_steps)
+            for _ in range(self.n_steps):
+                buffer_queue.append(obs)
+            obs = np.array(list(buffer_queue))
+        
         while total_steps < self._max_steps:
             if total_steps < self._policy.n_warmup:
                 action = self._env.action_space.sample()
             else:
                 action = self._policy.get_action(obs)
             
-
-
             choice_action = []
-            MAX_SPEED = 15
+            MAX_SPEED = 10
             choice_action.append((action[0]+1)/2*MAX_SPEED)
             if action[1]<= -1/3:
                 choice_action.append(-1)
@@ -118,14 +191,18 @@ class Trainer:
 
             # next_obs, reward, done, _ = self._env.step(action)
             done_events = next_obs["Agent-LHC"].events
-            r = 0
+            r = 0.0
             if done_events.reached_goal or (done["Agent-LHC"] and not done_events.reached_max_episode_steps):
-                r = 1
+                r = 1.0
             if done_events.collisions !=[]:
-                r = -1
+                r = -1.0
             #self.memory.append(state, action, r, next_state, done["Agent-LHC"])
             episode_return += r
-            next_obs = next_obs['Agent-LHC'].top_down_rgb.data
+
+            if self.state_input:
+                next_obs = self.observation_adapter(next_obs['Agent-LHC'])
+            else:
+                next_obs = next_obs['Agent-LHC'].top_down_rgb.data
 
             if self._show_progress:
                 self._env.render()
@@ -134,10 +211,19 @@ class Trainer:
             total_steps += 1
             tf.summary.experimental.set_step(total_steps)
 
-            done_flag = done
+            done_flag = done['Agent-LHC']
             if (hasattr(self._env, "_max_episode_steps") and
                 episode_steps == self._env._max_episode_steps):
                 done_flag = False
+            
+            # print(obs)
+            # print(action)
+            # print(next_obs)
+            # print(done_flag)
+            if self.lstm:
+                buffer_queue.append(next_obs)
+                next_obs = np.array(list(buffer_queue))
+
             replay_buffer.add(obs=obs, act=action,
                               next_obs=next_obs, rew=r, done=done_flag)
             obs = next_obs
@@ -145,10 +231,18 @@ class Trainer:
             if done['Agent-LHC'] or episode_steps == self._episode_max_steps:
                 replay_buffer.on_episode_end()
                 obs = self._env.reset()
-                obs = obs['Agent-LHC'].top_down_rgb.data
+                if self.state_input:
+                    obs = self.observation_adapter(obs['Agent-LHC'])
+                else:
+                    obs = obs['Agent-LHC'].top_down_rgb.data 
+                if self.lstm:
+                    buffer_queue = deque(maxlen=self.n_steps)
+                    for _ in range(self.n_steps):
+                        buffer_queue.append(obs)
+                    obs = np.array(list(buffer_queue))
                 self.return_log.append(episode_return)
                 self.step_log.append(total_steps)
-                with open('/home/haochen/SMARTS_test_TPDM/log_tf2rl_sac.json','w',encoding='utf-8') as writer:
+                with open('/home/haochen/SMARTS_test_TPDM/log_tf2rl_lstm_2.json','w',encoding='utf-8') as writer:
                     writer.write(json.dumps([self.return_log,self.step_log],ensure_ascii=False,indent=4))
 
                 n_episode += 1
@@ -182,7 +276,7 @@ class Trainer:
             if total_steps % self._test_interval == 0:
                 avg_test_return, avg_test_steps = self.evaluate_policy(total_steps)
                 self.eval_log.append(avg_test_return)
-                with open('/home/haochen/SMARTS_test_TPDM/log_tf2rl_sac_test.json','w',encoding='utf-8') as writer:
+                with open('/home/haochen/SMARTS_test_TPDM/log_tf2rl_lstm_test_2.json','w',encoding='utf-8') as writer:
                     writer.write(json.dumps(self.eval_log,ensure_ascii=False,indent=4))
                 self.logger.info("Evaluation Total Steps: {0: 7} Average Reward {1: 5.4f} over {2: 2} episodes".format(
                     total_steps, avg_test_return, self._test_episodes))
@@ -228,12 +322,23 @@ class Trainer:
             episode_return = 0.
             frames = []
             obs = self._test_env.reset()
-            obs = obs['Agent-LHC'].top_down_rgb.data
+            
+            if self.state_input:
+                obs = self.observation_adapter(obs['Agent-LHC'])
+            else:
+                obs = obs['Agent-LHC'].top_down_rgb.data
+            
+            if self.lstm:
+                buffer_queue = deque(maxlen=self.n_steps)
+                for _ in range(self.n_steps):
+                    buffer_queue.append(obs)
+                obs = np.array(list(buffer_queue))
+
             avg_test_steps += 1
             for _ in range(self._episode_max_steps):
                 action = self._policy.get_action(obs, test=True)
                 choice_action = []
-                MAX_SPEED = 15
+                MAX_SPEED = 10
                 choice_action.append((action[0]+1)/2*MAX_SPEED)
                 if action[1]<= -1/3:
                     choice_action.append(-1)
@@ -255,8 +360,15 @@ class Trainer:
                     r = -1
                 #self.memory.append(state, action, r, next_state, done["Agent-LHC"])
                 episode_return += r
-                next_obs = next_obs['Agent-LHC'].top_down_rgb.data
+                if self.state_input:
+                    next_obs = self.observation_adapter(next_obs['Agent-LHC'])
+                else:
+                    next_obs = next_obs['Agent-LHC'].top_down_rgb.data
                 # next_obs, reward, done, _ = self._test_env.step(action)
+
+                if self.lstm:
+                    buffer_queue.append(next_obs)
+                    next_obs = np.array(list(buffer_queue))
                 avg_test_steps += 1
                 if self._save_test_path:
                     replay_buffer.add(obs=obs, act=action,
@@ -269,6 +381,8 @@ class Trainer:
                 episode_return += r
                 obs = next_obs
                 if done['Agent-LHC']:
+                    obs = self._test_env.reset()
+                    obs = obs['Agent-LHC'].top_down_rgb.data
                     break
             prefix = "step_{0:08d}_epi_{1:02d}_return_{2:010.4f}".format(
                 total_steps, i, episode_return)

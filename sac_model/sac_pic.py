@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Conv2D, GlobalAveragePooling2D, Concatenate
+from tensorflow.keras.layers import Dense, Conv2D, GlobalAveragePooling2D, Concatenate,LayerNormalization,LSTM,Bidirectional,GlobalAveragePooling1D
 import sys 
 #sys.path.append('/home/haochen/anaconda3/envs/tf2/lib/python3.8/site-packages/tf2rl')
 from tf2rl.algos.policy_base import OffPolicyAgent
@@ -9,13 +9,26 @@ from tf2rl.policies.tfp_gaussian_actor import GaussianActor
 
 
 class CriticV(tf.keras.Model):
-    def __init__(self, state_shape, name='vf'):
+    def __init__(self, state_shape, name='vf',state_input=False,residual=False,lstm=False):
         super().__init__(name=name)
-
-        self.conv_layers = [Conv2D(16, 3, strides=3, activation='relu'), Conv2D(64, 3, strides=2, activation='relu'), 
-                            Conv2D(128, 3, strides=2, activation='relu'), Conv2D(256, 3, strides=2, activation='relu'), 
-                            GlobalAveragePooling2D()]
+        self.residual=residual
+        self.lstm = lstm
+        if state_input:
+            units = [256]*1
+            self.conv_layers = []
+            for unit in units:
+                self.conv_layers.append(Dense(unit, activation='relu'))
+        else:
+            self.conv_layers = [Conv2D(16, 3, strides=3, activation='relu'), Conv2D(64, 3, strides=2, activation='relu'), 
+                                Conv2D(128, 3, strides=2, activation='relu'), Conv2D(256, 3, strides=2, activation='relu'), 
+                                GlobalAveragePooling2D()]
+        if self.residual:
+            self.norm_layers = [LayerNormalization()]* len(self.conv_layers)
         self.connect_layers = [Dense(128, activation='relu'), Dense(32, activation='relu')]
+        if self.lstm:
+            self.lstm_layers = [LSTM(256,return_sequences=True),GlobalAveragePooling1D()]
+            self.conv_layers += self.lstm_layers+[Dense(256, activation='relu')] 
+
         self.out_layer = Dense(1, name="V", activation='linear')
 
         dummy_state = tf.constant(np.zeros(shape=(1,) + state_shape, dtype=np.float32))
@@ -24,8 +37,16 @@ class CriticV(tf.keras.Model):
 
     def call(self, states):
         features = states
-        for conv_layer in self.conv_layers:
-            features = conv_layer(features) 
+        if self.residual:
+            for i, cur_layer in enumerate(self.conv_layers):
+                #if i<len(self.conv_layers):
+                if i==0:
+                    features = self.norm_layers[i](cur_layer(features))
+                else:
+                    features = features + self.norm_layers[i](cur_layer(features))
+        else:
+            for cur_layer in self.conv_layers:
+                features = cur_layer(features)
 
         for connect_layer in self.connect_layers:
             features = connect_layer(features)
@@ -36,14 +57,26 @@ class CriticV(tf.keras.Model):
 
 
 class CriticQ(tf.keras.Model):
-    def __init__(self, state_shape, action_dim, name='qf'):
+    def __init__(self, state_shape, action_dim, name='qf',state_input=False,residual=False,lstm=False):
         super().__init__(name=name)
-
-        self.conv_layers = [Conv2D(16, 3, strides=3, activation='relu'), Conv2D(64, 3, strides=2, activation='relu'), 
-                            Conv2D(128, 3, strides=2, activation='relu'), Conv2D(256, 3, strides=2, activation='relu'), 
-                            GlobalAveragePooling2D()]
+        self.residual = residual
+        self.lstm = lstm
+        if state_input:
+            units = [256]*1
+            self.conv_layers = []
+            for unit in units:
+                self.conv_layers.append(Dense(unit, activation='relu'))
+        else:
+            self.conv_layers = [Conv2D(16, 3, strides=3, activation='relu'), Conv2D(64, 3, strides=2, activation='relu'), 
+                                Conv2D(128, 3, strides=2, activation='relu'), Conv2D(256, 3, strides=2, activation='relu'), 
+                                GlobalAveragePooling2D()]
+        if self.residual:
+            self.norm_layers = [LayerNormalization()]* len(self.conv_layers)
         self.act_layers = [Dense(64, activation='relu')]
         self.connect_layers = [Dense(128, activation='relu'), Dense(32, activation='relu')]
+        if self.lstm:
+            self.lstm_layers = [LSTM(256,return_sequences=True),GlobalAveragePooling1D()]
+            self.conv_layers = [Dense(256, activation='relu')]  +self.lstm_layers +[Dense(256, activation='relu')] 
         self.out_layer = Dense(1, name="Q", activation='linear')
 
         dummy_state = tf.constant(np.zeros(shape=(1,) + state_shape, dtype=np.float32))
@@ -54,8 +87,16 @@ class CriticQ(tf.keras.Model):
     def call(self, states, actions):
         features = states
 
-        for conv_layer in self.conv_layers:
-            features = conv_layer(features)
+        if self.residual:
+            for i, cur_layer in enumerate(self.conv_layers):
+                #if i<len(self.conv_layers):
+                if i==0:
+                    features = self.norm_layers[i](cur_layer(features))
+                else:
+                    features = features + self.norm_layers[i](cur_layer(features))
+        else:
+            for cur_layer in self.conv_layers:
+                features = cur_layer(features)
 
         action = self.act_layers[0](actions) 
         features_action = Concatenate()([features, action])
@@ -81,10 +122,16 @@ class SAC(OffPolicyAgent):
             auto_alpha=False,
             n_warmup=int(1e4),
             memory_capacity=int(1e6),
+            state_input=False,
+            residual=False,
+            lstm=False,
             **kwargs):
         super().__init__(
             name=name, memory_capacity=memory_capacity, n_warmup=n_warmup, **kwargs)
-
+        self.state_input = state_input
+        self.lstm = lstm
+        # self.n_steps=n_steps
+        self.residual = residual
         self._setup_actor(state_shape, action_dim, lr, max_action)
         self._setup_critic_v(state_shape, lr)
         self._setup_critic_q(state_shape, action_dim, lr)
@@ -104,18 +151,18 @@ class SAC(OffPolicyAgent):
         self.state_ndim = len(state_shape)
 
     def _setup_actor(self, state_shape, action_dim, lr, max_action=1.):
-        self.actor = GaussianActor(state_shape, action_dim, max_action, squash=True)
+        self.actor = GaussianActor(state_shape, action_dim, max_action, squash=True,state_input=self.state_input,residual=self.residual,lstm=self.lstm)
         self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)#, clipnorm=5.0)
 
     def _setup_critic_q(self, state_shape, action_dim, lr):
-        self.qf1 = CriticQ(state_shape, action_dim, name="qf1")
-        self.qf2 = CriticQ(state_shape, action_dim, name="qf2")
+        self.qf1 = CriticQ(state_shape, action_dim, name="qf1",state_input=self.state_input,residual=self.residual,lstm=self.lstm)
+        self.qf2 = CriticQ(state_shape, action_dim, name="qf2",state_input=self.state_input,residual=self.residual,lstm=self.lstm)
         self.qf1_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)#, clipnorm=5.0)
         self.qf2_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)#, clipnorm=5.0)
 
     def _setup_critic_v(self, state_shape, lr):
-        self.vf = CriticV(state_shape)
-        self.vf_target = CriticV(state_shape)
+        self.vf = CriticV(state_shape,state_input=self.state_input,residual=self.residual,lstm=self.lstm)
+        self.vf_target = CriticV(state_shape,state_input=self.state_input,residual=self.residual,lstm=self.lstm)
         update_target_variables(self.vf_target.weights, self.vf.weights, tau=1.0)
         self.vf_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)#, clipnorm=5.0)
 
